@@ -280,7 +280,7 @@ const rawCsvPatterns = {
 6,2,5,1,3,4
 4,6,3,5,1,2
 5,1,4,6,2,3
-3,5,2,4,6,1
+3,5,1,2,6,4
 1,3,5,6,4,2
 2,4,6,1,5,3
 5,1,3,4,2,6
@@ -414,7 +414,7 @@ const rawCsvPatterns = {
 4,8,1,3,2,6,7,5
 5,1,2,4,3,7,8,6
 2,7,3,8,5,6,1,4
-7,4,8,5,2,3,6,1,
+7,4,8,5,2,3,6,1
 4,1,5,2,7,8,3,6
 8,5,1,6,3,4,7,2
 5,2,6,3,8,1,4,7
@@ -729,6 +729,7 @@ function App() {
   const [fontSize, setFontSize] = useState(16); // Default font size for participant names
   const [numColumns, setNumColumns] = useState(3); // Default number of columns for station display
   const [showInfoModal, setShowInfoModal] = useState(false); // New state for info modal
+  const [showHomeConfirm, setShowHomeConfirm] = useState(false); // New state for "Home" confirmation modal
 
   // Effect to parse CSV patterns when the component mounts
   useEffect(() => {
@@ -837,12 +838,18 @@ function App() {
   };
 
   // Function to go back to home screen without clearing data
-  const handleBackToHome = () => {
+  const handleGoHomeConfirmed = () => {
     setScreen('home');
+    setShowHomeConfirm(false); // Close the modal
     // Data in participantsInput and stationsInput is intentionally retained
     // Other states like parsedParticipants, parsedStations, shuffledAssignments
     // are also kept, so if the user generates groups again, it uses the same data
     // unless inputs are changed.
+  };
+
+  // Initiates the "Home" confirmation modal
+  const handleBackToHome = () => {
+    setShowHomeConfirm(true);
   };
 
   // Initiates the full reset confirmation modal
@@ -936,7 +943,7 @@ function App() {
             >
               &times;
             </button>
-        
+            <h3 className="text-2xl font-bold text-gray-800 mb-4">About Arpoja</h3>
             <p className="text-gray-700 mb-4">
               Arpoja is a special group generator for station-based activities. The participants rotate across stations in a randomized order while interacting with new people in every round. 
             </p>
@@ -947,8 +954,9 @@ function App() {
               <li>Assign students to station activities in PE or sports practice</li>
               <li>Form new groups for team-building games</li>
               <li>Shuffle participants for brainstorming sessions with your team</li>
-               <li>Divide household chores randomly</li>
-              <li>Any scenario involving up to 70 participants and 12 stations</li>
+              <li>Divide household chores randomly</li>
+              <li>Any scenario involving up to 70 participants and 12 stations...</li>
+
             </ul>
           </div>
         </div>
@@ -1020,12 +1028,6 @@ function App() {
 
         <div className="flex flex-col sm:flex-row justify-center gap-4 w-full mb-6">
           <button
-            onClick={handleBackToHome}
-            className="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-75"
-          >
-            Home
-          </button>
-          <button
             onClick={handlePreviousRound}
             disabled={currentRound === 1}
             className={`flex-1 ${currentRound === 1 ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75`}
@@ -1039,12 +1041,14 @@ function App() {
           >
             Next Round →
           </button>
+          {/* This button will now trigger the confirmation modal */}
           <button
-            onClick={confirmFullReset} // Calls the confirmation modal
-            className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75"
+            onClick={handleBackToHome}
+            className="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-75"
           >
-            Reset
+            Home
           </button>
+          {/* The Reset button is removed as per your request */}
         </div>
 
         {/* Font Size and Columns Sliders */}
@@ -1082,8 +1086,30 @@ function App() {
           </div>
         </div>
 
+        {/* Home Confirmation Modal */}
+        {showHomeConfirm && (
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50">
+            <div className="bg-white p-8 rounded-lg shadow-xl text-center max-w-sm w-full">
+              <p className="text-xl font-semibold text-gray-800 mb-6">Going back home. Are you finished with these stations?</p>
+              <div className="flex justify-center gap-4">
+                <button
+                  onClick={handleGoHomeConfirmed}
+                  className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-5 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-75"
+                >
+                  Yes
+                </button>
+                <button
+                  onClick={() => setShowHomeConfirm(false)}
+                  className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-5 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-75"
+                >
+                  No
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
-        {/* Reset Confirmation Modal */}
+        {/* Reset Confirmation Modal (still exists for internal use if needed, but no button) */}
         {showResetConfirm && (
           <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50">
             <div className="bg-white p-8 rounded-lg shadow-xl text-center max-w-sm w-full">
