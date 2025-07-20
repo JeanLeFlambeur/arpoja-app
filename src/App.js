@@ -944,10 +944,11 @@ function App() {
               Use Arpoja to:
             </p>
             <ul className="list-disc list-inside text-gray-700 space-y-1">
-              <li>Assign students to station activities in PE or sports practice.</li>
-              <li>Form new groups for team-building games.</li>
-              <li>Shuffle participants for brainstorming sessions with your team.</li>
-              <li>Any scenario involving up to 70 participants and 12 stations.</li>
+              <li>Assign students to station activities in PE or sports practice</li>
+              <li>Form new groups for team-building games</li>
+              <li>Shuffle participants for brainstorming sessions with your team</li>
+               <li>Divide household chores randomly</li>
+              <li>Any scenario involving up to 70 participants and 12 stations</li>
             </ul>
           </div>
         </div>
