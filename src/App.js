@@ -414,7 +414,7 @@ const rawCsvPatterns = {
 4,8,1,3,2,6,7,5
 5,1,2,4,3,7,8,6
 2,7,3,8,5,6,1,4
-7,4,8,5,2,3,6,1
+7,4,8,5,2,3,6,1,
 4,1,5,2,7,8,3,6
 8,5,1,6,3,4,7,2
 5,2,6,3,8,1,4,7
@@ -728,6 +728,7 @@ function App() {
   const [showResetConfirm, setShowResetConfirm] = useState(false); // State for reset confirmation modal
   const [fontSize, setFontSize] = useState(16); // Default font size for participant names
   const [numColumns, setNumColumns] = useState(3); // Default number of columns for station display
+  const [showInfoModal, setShowInfoModal] = useState(false); // New state for info modal
 
   // Effect to parse CSV patterns when the component mounts
   useEffect(() => {
@@ -767,7 +768,7 @@ function App() {
 
     // 2. Validate inputs
     if (participants.length === 0 || stations.length === 0) {
-      showMessage('Please enter participants and station names.', 'error');
+      showMessage('Please enter participants and stations.', 'error');
       return;
     }
     if (participants.length > 70) {
@@ -775,7 +776,7 @@ function App() {
       return;
     }
     if (stations.length < 3 || stations.length > 12) {
-      showMessage('Please enter between 3 and 12 station names.', 'error');
+      showMessage('Please enter between 3 and 12 stations.', 'error');
       return;
     }
 
@@ -792,7 +793,7 @@ function App() {
     // 5. Assign stations to participants based on the pattern
     const assignments = [];
     // The number of rounds is the length of the pattern row, which is equal to the number of stations
-    const numRounds = stations.length;
+    const numRounds = stations.length; // This variable is used here and implicitly in renderResultsScreen via parsedStations.length
 
     shuffledParticipants.forEach((participant, pIndex) => {
       // Use modulo to cycle through the pattern rows if there are more participants than pattern rows
@@ -807,7 +808,7 @@ function App() {
       assignments.push({ name: participant, assignments: participantAssignments });
     });
 
-    setParsedParticipants(shuffledParticipants);
+    setParsedParticipants(shuffledParticipants); // This state is used in the grouping logic
     setParsedStations(stations);
     setShuffledAssignments(assignments);
     setCurrentRound(1); // Start from round 1
@@ -835,13 +836,22 @@ function App() {
     }
   };
 
-  // Initiates the reset confirmation modal
-  const confirmReset = () => {
+  // Function to go back to home screen without clearing data
+  const handleBackToHome = () => {
+    setScreen('home');
+    // Data in participantsInput and stationsInput is intentionally retained
+    // Other states like parsedParticipants, parsedStations, shuffledAssignments
+    // are also kept, so if the user generates groups again, it uses the same data
+    // unless inputs are changed.
+  };
+
+  // Initiates the full reset confirmation modal
+  const confirmFullReset = () => {
     setShowResetConfirm(true);
   };
 
-  // Handles the actual reset if confirmed
-  const handleReset = () => {
+  // Handles the actual full reset if confirmed
+  const handleFullReset = () => {
     setScreen('home');
     setParticipantsInput('');
     setStationsInput('');
@@ -857,7 +867,20 @@ function App() {
 
   // Render the home screen
   const renderHomeScreen = () => (
-    <div className="flex flex-col items-center p-6 bg-white rounded-xl shadow-lg max-w-2xl w-full">
+    <div className="flex flex-col items-center p-6 bg-white rounded-xl shadow-lg max-w-2xl w-full relative"> {/* Added relative for positioning info icon */}
+      {/* Info Icon */}
+      <button
+        onClick={() => setShowInfoModal(true)}
+        className="absolute top-4 right-4 p-2 rounded-full bg-blue-100 hover:bg-blue-200 text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75 transition duration-200"
+        aria-label="App Information"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-info">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M12 16v-4"/>
+          <path d="M12 8h.01"/>
+        </svg>
+      </button>
+
       <h2 className="text-3xl font-extrabold text-gray-800 mb-6 text-center">Arpoja</h2>
 
       {message.text && (
@@ -869,26 +892,26 @@ function App() {
 
       <div className="w-full mb-6">
         <label htmlFor="participants" className="block text-lg font-semibold text-gray-700 mb-2">
-          Participants (max 70, separated by line breaks) 
+          Participants (max 70, separated by line breaks)
         </label>
         <textarea
           id="participants"
           className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 resize-y min-h-[100px]"
-          placeholder="e.g., Harry&#10;Hermione&#10;Ron&#10;Neville&#10;Ginny"
+          placeholder="e.g., Huey&#10;Dewey&#10;Louie..."
           value={participantsInput}
           onChange={(e) => setParticipantsInput(e.target.value)}
-          rows="5"
+          rows="3"
         ></textarea>
       </div>
 
       <div className="w-full mb-8">
         <label htmlFor="stations" className="block text-lg font-semibold text-gray-700 mb-2">
-          Station Names (3-12, separated by line breaks) 
+          Stations (3-12, separated by line breaks)
         </label>
         <textarea
           id="stations"
           className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 resize-y min-h-[80px]"
-          placeholder="e.g., Jump rope&#10;Juggling&#10;Trampoline"
+          placeholder="e.g., Dribbling&#10;Passing&#10;Shooting..."
           value={stationsInput}
           onChange={(e) => setStationsInput(e.target.value)}
           rows="3"
@@ -901,6 +924,34 @@ function App() {
       >
         Generate Groups
       </button>
+
+      {/* Info Modal */}
+      {showInfoModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 p-4">
+          <div className="bg-white p-8 rounded-lg shadow-xl max-w-md w-full relative">
+            <button
+              onClick={() => setShowInfoModal(false)}
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-2xl font-bold focus:outline-none"
+              aria-label="Close"
+            >
+              &times;
+            </button>
+        
+            <p className="text-gray-700 mb-4">
+              Arpoja is a special group generator for station-based activities. The participants rotate across stations in a randomized order while interacting with new people in every round. 
+            </p>
+            <p className="text-gray-700 mb-2 font-semibold">
+              Use Arpoja to:
+            </p>
+            <ul className="list-disc list-inside text-gray-700 space-y-1">
+              <li>Assign students to station activities in PE or sports practice.</li>
+              <li>Form new groups for team-building games.</li>
+              <li>Shuffle participants for brainstorming sessions with your team.</li>
+              <li>Any scenario involving up to 70 participants and 12 stations.</li>
+            </ul>
+          </div>
+        </div>
+      )}
     </div>
   );
 
@@ -920,8 +971,6 @@ function App() {
     });
 
     // Determine the grid class dynamically
-    // Tailwind's JIT mode allows arbitrary values, but for fixed values, direct classes are common.
-    // For dynamic values, we can construct the class string or use inline style for gridTemplateColumns
     const getGridColsClass = (cols) => {
       if (cols === 1) return 'grid-cols-1';
       if (cols === 2) return 'grid-cols-2';
@@ -968,7 +1017,13 @@ function App() {
           ))}
         </div>
 
-        <div className="flex flex-col sm:flex-row justify-center gap-4 w-full mb-6"> {/* Added mb-6 for spacing from sliders */}
+        <div className="flex flex-col sm:flex-row justify-center gap-4 w-full mb-6">
+          <button
+            onClick={handleBackToHome}
+            className="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-75"
+          >
+            Home
+          </button>
           <button
             onClick={handlePreviousRound}
             disabled={currentRound === 1}
@@ -984,7 +1039,7 @@ function App() {
             Next Round →
           </button>
           <button
-            onClick={confirmReset}
+            onClick={confirmFullReset} // Calls the confirmation modal
             className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75"
           >
             Reset
@@ -1034,7 +1089,7 @@ function App() {
               <p className="text-xl font-semibold text-gray-800 mb-6">All data will be cleared, do you want to continue?</p>
               <div className="flex justify-center gap-4">
                 <button
-                  onClick={handleReset}
+                  onClick={handleFullReset} // Calls the actual reset
                   className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-5 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75"
                 >
                   Yes
